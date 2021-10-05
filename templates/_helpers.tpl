@@ -35,10 +35,9 @@ Common labels
 */}}
 {{- define "core-service.labels" -}}
 helm.sh/chart: {{ include "core-service.chart" . }}
-{{ include "core-service.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
+app.kubernetes.io/name: {{ .Values.app.name | quote }}
 app.kubernetes.io/version: {{ .Values.app.version | quote }}
-{{- end }}
+app.kubernetes.io/instance: {{ .Values.app.name | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
@@ -47,7 +46,6 @@ Selector labels
 */}}
 {{- define "core-service.selectorLabels" -}}
 app.kubernetes.io/name: {{ .Values.app.name | quote }}
-app.kubernetes.io/version: {{ .Values.app.version | quote }}
 {{- end }}
 
 {{/*

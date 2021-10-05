@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+env:
+  GITHUB_TOKEN: ${{ github.token }}
 jobs:
   release:
     runs-on: ubuntu-latest

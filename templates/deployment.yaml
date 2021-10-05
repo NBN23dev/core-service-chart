@@ -5,8 +5,11 @@ metadata:
   labels:
     {{- include "core-service.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  minReadySeconds: {{ .Values.deployment.minReadySeconds }}
+  replicas: {{ .Values.autoscaling.replicas }}
+  {{- with .Values.autoscaling.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:
@@ -18,9 +21,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "core-service.selectorLabels" . | nindent 8 }}
-        app: {{ include "core-service.fullname" . }}
-        version: v1
+        {{- include "core-service.labels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -31,7 +32,8 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
         {{- toYaml .Values.volumes | nindent 8 }}
-      containers:
+      terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds }}
+      containers: 
         - name: {{ .Release.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -52,6 +54,10 @@ spec:
                   fieldPath: metadata.namespace
             - name: CONTAINER_NAME
               value: {{ .Release.Name }}
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid              
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -70,10 +76,6 @@ spec:
             - name: http
               containerPort: {{ .Values.deployment.containerPort }}
               protocol: TCP
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sleep", "20"]
           {{- with .Values.health.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -83,7 +85,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}          
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
